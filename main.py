@@ -1,13 +1,14 @@
 import requests
 import selectorlib
-import os.path
+import sqlite3
 from emailing import send_email
 
 URL = "http://programmer100.pythonanywhere.com/tours/"
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 YAML_PATH = "extract.yaml"
-EVENTS_PATH = "data.txt"
+DATABASE_PATH = "data.db"
+TABLE_NAME = "Events"
 
 def scrape(url):
     response = requests.get(url, headers=HEADERS)
@@ -22,15 +23,21 @@ def extract(source):
     return value
 
 def store_event(event):
-    with open(EVENTS_PATH, "a") as file:
-        file.write(event + "\n")
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        split = event.split(", ")
+        performer, location, date = split
+        cursor = connection.cursor()
+
+        cursor.execute(f"INSERT INTO {TABLE_NAME} VALUES(?,?,?)", (performer, location, date))
+        connection.commit()
+
 
 def read_events():
-    if not os.path.isfile(EVENTS_PATH):
-        return []
-    
-    with open(EVENTS_PATH, "r") as file:
-        events = [event.strip() for event in file.readlines()]
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * from {TABLE_NAME}")
+        events = cursor.fetchall()
+        events = [", ".join(event) for event in events]
 
     return events
 

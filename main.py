@@ -1,6 +1,7 @@
 import requests
 import selectorlib
 import os.path
+from emailing import send_email
 
 URL = "http://programmer100.pythonanywhere.com/tours/"
 HEADERS = {
@@ -19,9 +20,6 @@ def extract(source):
     value = extractor.extract(source)["tours"]
 
     return value
-
-def send_email():
-    print("Email was sent")
 
 def store_event(event):
     with open(EVENTS_PATH, "a") as file:
@@ -43,5 +41,5 @@ if extracted != "No upcoming tours":
     events = read_events()
 
     if extracted not in events:
-        send_email()
+        send_email(f"New event was found!\n{extracted}")
         store_event(extracted)
